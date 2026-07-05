@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <string.h>
-
+#include <unistd.h>
+#include <errno.h>
 
 int main() {
 
@@ -31,11 +33,28 @@ int main() {
                 }
 
                 argv[i] = NULL;
-                
+
                 if (strtok_r(NULL, " ", &saveptr)) {
                     printf("Error: too many tokens\n");
                 }
+
+                pid_t p = fork();
+
+                if (p < 0) {
+                    perror(strerror(errno));
+                } else if (p == 0) {
+                    if (execvp(argv[0], argv) < 0) {
+                        perror(strerror(errno));
+                        _exit(1);
+                    }
+                } else if (p > 0) {
+                    int status;
+                    waitpid(p, &status, 0);
+                    continue;
+                }
             }
+        } else {
+            perror(strerror(errno));
         }
     } while (line_length != -1);
 
