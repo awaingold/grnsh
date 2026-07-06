@@ -5,6 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include "builtins.h"
 
 int main() {
 
@@ -38,23 +39,34 @@ int main() {
                     printf("Error: too many tokens\n");
                 }
 
-                pid_t p = fork();
-
-                if (p < 0) {
-                    perror(strerror(errno));
-                } else if (p == 0) {
-                    if (execvp(argv[0], argv) < 0) {
-                        perror(strerror(errno));
-                        _exit(1);
-                    }
-                } else if (p > 0) {
-                    int status;
-                    waitpid(p, &status, 0);
+                if(argv[0] == NULL) {
                     continue;
+                } else if (strcmp(argv[0], "cd") == 0) {
+                    cd(argv);
+                } else if (strcmp(argv[0], "exit") == 0) {
+                    break;
+                } else {
+
+                    pid_t p = fork();
+
+                    if (p < 0) {
+                        perror("grnsh");
+                    } else if (p == 0) {
+                        if (execvp(argv[0], argv) < 0) {
+                            perror("grnsh");
+                            _exit(1);
+                        }
+                    } else if (p > 0) {
+                        int status;
+                        waitpid(p, &status, 0);
+                        continue;
+                    }
                 }
             }
         } else {
-            perror(strerror(errno));
+            if (!feof(stdin) || ferror(stdin)) {
+                perror("grnsh");
+            }
         }
     } while (line_length != -1);
 
@@ -62,3 +74,4 @@ int main() {
     return 0;
     
 }
+
