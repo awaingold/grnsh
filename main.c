@@ -39,6 +39,7 @@ int main() {
                     printf("Error: too many tokens\n");
                 }
 
+                // Check for empty, then for builtins
                 if(argv[0] == NULL) {
                     continue;
                 } else if (strcmp(argv[0], "cd") == 0) {
@@ -49,14 +50,15 @@ int main() {
 
                     pid_t p = fork();
 
-                    if (p < 0) {
+                    
+                    if (p < 0) { // Fork error
                         perror("grnsh");
-                    } else if (p == 0) {
-                        if (execvp(argv[0], argv) < 0) {
+                    } else if (p == 0) { // Child process
+                        if (execvp(argv[0], argv) < 0) { // Execvp error
                             perror("grnsh");
-                            _exit(1);
+                            _exit(1); // Need to exit child process immediately without flushing buffers
                         }
-                    } else if (p > 0) {
+                    } else if (p > 0) { // Parent process
                         int status;
                         waitpid(p, &status, 0);
                         continue;
@@ -64,6 +66,7 @@ int main() {
                 }
             }
         } else {
+            // Encountered an error if not at EOF or if ferror
             if (!feof(stdin) || ferror(stdin)) {
                 perror("grnsh");
             }
