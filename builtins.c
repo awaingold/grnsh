@@ -5,9 +5,9 @@
 
 /*
 Changes the directory of the calling process to argv[1], or to the user's home directory if argv[1] is null.
+@requires argv != NULL
 @param argv[] contains the destination path in argv[1]
 @throws error on chdir() fail
-@requires argv != NULL
 */
 void cd(char* argv[]) {
     if (argv == NULL) {

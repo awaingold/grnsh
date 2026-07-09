@@ -39,6 +39,61 @@ int main() {
                     printf("Error: too many tokens\n");
                 }
 
+                // hardcoded piping test
+                // if(strcmp(argv[0], "pipetest") == 0) {
+                //     int pipefd[2];
+                //     int pipe_status = pipe(pipefd);
+                //     if (pipe_status < 0) {
+                //         perror("grnsh");
+                //     } else {
+                //         pid_t id_1 = fork();
+                //         if (id_1 < 0) {
+                //             perror("grnsh");
+                //         } else if (id_1 == 0) {
+                //             // child (cmd1, ls)
+                //             if (close(pipefd[0]) < 0) { // close read end
+                //                 perror("grnsh");
+                //             }
+                //             if (dup2(pipefd[1], 1) < 0) { // replace write end
+                //                 perror("grnsh");
+                //             }
+                //             char* argv[] = {"bad1", NULL};
+                //             if (execvp(argv[0], argv) < 0) {
+                //                 perror("grnsh");
+                //                 _exit(1);
+                //             }
+                //         }
+
+                //         pid_t id_2 = fork();
+                //         if (id_2 < 0) {
+                //             perror("grnsh");
+                //         } else if (id_2 == 0) {
+                //             // child (cmd2, wc -l)
+                //             if (close(pipefd[1]) < 0) { // close write end
+                //                 perror("grnsh");
+                //             }
+                //             if (dup2(pipefd[0], 0) < 0) { // replace read end
+                //                 perror("grnsh");
+                //             }
+                //             char* argv[] = {"wc", "-l", NULL};
+                //             if (execvp(argv[0], argv) < 0) {
+                //                 perror("grnsh");
+                //                 _exit(1);
+                //             }
+                            
+                //         }
+
+                //         close(pipefd[0]);
+                //         close(pipefd[1]);
+                //         int child_1_status;
+                //         int child_2_status;
+                //         waitpid(id_1, &child_1_status, 0);
+                //         waitpid(id_2, &child_2_status, 0);
+                //         continue;
+    
+                //     }
+                // }
+
                 // Check for empty, then for builtins
                 if(argv[0] == NULL) {
                     continue;
