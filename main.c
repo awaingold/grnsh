@@ -6,6 +6,10 @@
 #include <unistd.h>
 #include <errno.h>
 #include "builtins.h"
+#include "parser.h"
+
+#define MAX_COMMANDS 8
+#define MAX_TOKENS 8
 
 int main() {
 
@@ -20,24 +24,27 @@ int main() {
 
         if(line_length != -1) {
             if(input[0] != '\n') {
-                char* argv[5];
+                char* argv[MAX_COMMANDS][MAX_TOKENS];
                 char* saveptr;
-                argv[0] = strtok_r(input, " \n", &saveptr);
+                
+                parse_command(strtok_r(input, "|", &saveptr), argv[0], MAX_TOKENS);
                 int i = 1;
-                while (i < 4) {
-                    argv[i] = strtok_r(NULL, " \n", &saveptr);
-                    if(!argv[i]) {
-                        i++;
+                while (i < MAX_COMMANDS) {
+                    char* cmd = strtok_r(NULL, "|", &saveptr);
+                    if(!cmd) {
                         break;
                     }
+                    parse_command(cmd, argv[i], MAX_TOKENS);
                     i++;
                 }
 
-                argv[i] = NULL;
+                int num_commands = i;
 
-                if (strtok_r(NULL, " ", &saveptr)) {
-                    printf("Error: too many tokens\n");
+                if (strtok_r(NULL, "|", &saveptr)) {
+                    printf("Error: too many commands\n");
                 }
+
+                printf("Num commands: %d\n", num_commands);
 
                 // hardcoded piping test
                 // if(strcmp(argv[0], "pipetest") == 0) {
@@ -95,11 +102,11 @@ int main() {
                 // }
 
                 // Check for empty, then for builtins
-                if(argv[0] == NULL) {
+                if(argv[0][0] == NULL) {
                     continue;
-                } else if (strcmp(argv[0], "cd") == 0) {
-                    cd(argv);
-                } else if (strcmp(argv[0], "exit") == 0) {
+                } else if (strcmp(argv[0][0], "cd") == 0) {
+                    cd(argv[0]);
+                } else if (strcmp(argv[0][0], "exit") == 0) {
                     break;
                 } else {
 
@@ -109,7 +116,7 @@ int main() {
                     if (p < 0) { // Fork error
                         perror("grnsh");
                     } else if (p == 0) { // Child process
-                        if (execvp(argv[0], argv) < 0) { // Execvp error
+                        if (execvp(argv[0][0], argv[0]) < 0) { // Execvp error
                             perror("grnsh");
                             _exit(1); // Need to exit child process immediately without flushing buffers
                         }
