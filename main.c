@@ -38,68 +38,11 @@ int main() {
                     i++;
                 }
 
-                int num_commands = i;
+                int N = i;
 
                 if (strtok_r(NULL, "|", &saveptr)) {
                     printf("Error: too many commands\n");
                 }
-
-                printf("Num commands: %d\n", num_commands);
-
-                // hardcoded piping test
-                // if(strcmp(argv[0], "pipetest") == 0) {
-                //     int pipefd[2];
-                //     int pipe_status = pipe(pipefd);
-                //     if (pipe_status < 0) {
-                //         perror("grnsh");
-                //     } else {
-                //         pid_t id_1 = fork();
-                //         if (id_1 < 0) {
-                //             perror("grnsh");
-                //         } else if (id_1 == 0) {
-                //             // child (cmd1, ls)
-                //             if (close(pipefd[0]) < 0) { // close read end
-                //                 perror("grnsh");
-                //             }
-                //             if (dup2(pipefd[1], 1) < 0) { // replace write end
-                //                 perror("grnsh");
-                //             }
-                //             char* argv[] = {"bad1", NULL};
-                //             if (execvp(argv[0], argv) < 0) {
-                //                 perror("grnsh");
-                //                 _exit(1);
-                //             }
-                //         }
-
-                //         pid_t id_2 = fork();
-                //         if (id_2 < 0) {
-                //             perror("grnsh");
-                //         } else if (id_2 == 0) {
-                //             // child (cmd2, wc -l)
-                //             if (close(pipefd[1]) < 0) { // close write end
-                //                 perror("grnsh");
-                //             }
-                //             if (dup2(pipefd[0], 0) < 0) { // replace read end
-                //                 perror("grnsh");
-                //             }
-                //             char* argv[] = {"wc", "-l", NULL};
-                //             if (execvp(argv[0], argv) < 0) {
-                //                 perror("grnsh");
-                //                 _exit(1);
-                //             }
-                            
-                //         }
-
-                //         close(pipefd[0]);
-                //         close(pipefd[1]);
-                //         int child_1_status;
-                //         int child_2_status;
-                //         waitpid(id_1, &child_1_status, 0);
-                //         waitpid(id_2, &child_2_status, 0);
-                //         continue;
-    
-                //     }
-                // }
 
                 // Check for empty, then for builtins
                 if(argv[0][0] == NULL) {
@@ -108,22 +51,67 @@ int main() {
                     cd(argv[0]);
                 } else if (strcmp(argv[0][0], "exit") == 0) {
                     break;
-                } else {
+                } else { // piping logic
 
-                    pid_t p = fork();
+                    int pipefd[N - 1][2];
+                    pid_t ids[N];
+                    int pipes_created = 0;
 
-                    
-                    if (p < 0) { // Fork error
-                        perror("grnsh");
-                    } else if (p == 0) { // Child process
-                        if (execvp(argv[0][0], argv[0]) < 0) { // Execvp error
+                    for (int k = 0; k < N - 1; k++) {
+                        if (pipe(pipefd[k]) < 0) {
                             perror("grnsh");
-                            _exit(1); // Need to exit child process immediately without flushing buffers
+                        } else {
+                            pipes_created++;
                         }
-                    } else if (p > 0) { // Parent process
-                        int status;
-                        waitpid(p, &status, 0);
+                    }
+
+                    if (pipes_created != N - 1) {
                         continue;
+                    }
+                
+                    for (int k = 0; k < N; k++) {
+                        pid_t pid = fork();
+                        if (pid < 0) {
+                            //error
+                            perror("grnsh");
+                            N = k;
+                            break;
+                        } else if (pid == 0) {
+                            // child
+                            if (k != 0) {
+                                if (dup2(pipefd[k - 1][0], 0) < 0) {
+                                    perror("grnsh");
+                                    _exit(1);
+                                }
+                            }
+                            if (k != N - 1) {
+                                if (dup2(pipefd[k][1], 1) < 0) {
+                                    perror("grnsh");
+                                    _exit(1);
+                                }
+                            }
+                            for (int i = 0; i < N - 1; i++) { // close ALL pipe ends to avoid hanging
+                                close(pipefd[i][0]);
+                                close(pipefd[i][1]);
+                            }
+                            if (execvp(argv[k][0], argv[k]) < 0) {
+                                perror("grnsh");
+                                _exit(1);
+                            } 
+                        } else {
+                            // parent
+                            ids[k] = pid;
+                            }
+                    }
+        
+
+                    for (int i = 0; i < pipes_created; i++) { // close ALL pipe ends to avoid hanging, but in parent this time
+                        close(pipefd[i][0]);
+                        close(pipefd[i][1]);
+                    }
+                    int statuses[N];
+                    for (int k = 0; k < N; k++) {
+                        waitpid(ids[k], &statuses[k], 0);
                     }
                 }
             }
