@@ -26,6 +26,10 @@ int main() {
             if(input[0] != '\n') {
                 char* argv[MAX_COMMANDS][MAX_TOKENS];
                 char* saveptr;
+
+                // char* input_filepath;
+                // char* output_filepath;
+                // int flag;
                 
                 parse_command(strtok_r(input, "|", &saveptr), argv[0], MAX_TOKENS);
                 int i = 1;

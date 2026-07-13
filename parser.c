@@ -35,3 +35,6 @@ void parse_command(char* input, char* argv[], int max_tokens) {
         fprintf(stderr, "Error: too many tokens\n");
     }
 }
+
+void tokenize(char* input, char* argv[]) {
+}
