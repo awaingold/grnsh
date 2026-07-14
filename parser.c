@@ -47,15 +47,17 @@ int tokenize(char* input, char* argv[], int max_tokens) {
     int argp = 0;
     int bufferp = 0;
     int bufferl = DEFAULT_LENGTH;
-    for (int i = 0; i < strlen(input); i++) {
+    int len = strlen(input);
+    for (int i = 0; i < len; i++) {
         if (is_delimiter(input[i]) || i == strlen(input) - 1) {
             if (argp >= max_tokens - 1) {
                 fprintf(stderr, "Error: too many tokens.\n");
                 free(buffer);
                 return 1;
             }
-            if (bufferp >= bufferl) {
+            if (bufferp >= bufferl - 1) {
                 char* tmp = realloc(buffer, bufferl + BUFFER_INCREMENT);
+                bufferl += BUFFER_INCREMENT;
                 if (tmp) {
                     buffer = tmp;
                 } else {
@@ -64,8 +66,12 @@ int tokenize(char* input, char* argv[], int max_tokens) {
                     return -1;
                 }
             }
+            if (!is_delimiter(input[i])) {
+                buffer[bufferp] = input[i];
+                bufferp++;
+            }
             buffer[bufferp] = '\0';
-            argv[argp] = malloc(sizeof(buffer));
+            argv[argp] = malloc(bufferp + 1);
             strcpy(argv[argp], buffer);
             argp++;
             if (is_delimiter(input[i])) {
@@ -74,13 +80,18 @@ int tokenize(char* input, char* argv[], int max_tokens) {
                 delim[1] = '\0';
                 argv[argp] = malloc(sizeof(delim));
                 strcpy(argv[argp], delim);
+                argp++;
+            } else {
+                argv[argp] = NULL;
             }
-            argp++;
+            
             bufferp = 0;
+            free(buffer);
             buffer = malloc(DEFAULT_LENGTH);
         } else {
             if (bufferp >= bufferl) {
                 char* tmp = realloc(buffer, bufferl + BUFFER_INCREMENT);
+                bufferl += BUFFER_INCREMENT;
                 if (tmp) {
                     buffer = tmp;
                 } else {

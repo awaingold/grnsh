@@ -10,13 +10,18 @@
 
 void test_tokenize() {
     char* argv[16];
-    char* input = "foo.txt>cmd<bar.txt\n";
+    char* input = "verylongfilename.txt>cmd<bar.txt";
     tokenize(input, argv, 64);
     printf("%s\n", argv[0]);
     printf("%s\n", argv[1]);
     printf("%s\n", argv[2]);
     printf("%s\n", argv[3]);
     printf("%s\n", argv[4]);
+    free(argv[0]);
+    free(argv[1]);
+    free(argv[2]);
+    free(argv[3]);
+    free(argv[4]);
 }
     
 
