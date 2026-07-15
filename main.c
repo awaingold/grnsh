@@ -27,18 +27,18 @@ int main() {
                 char* argv[MAX_COMMANDS][MAX_TOKENS];
                 char* saveptr;
 
-                // char* input_filepath;
-                // char* output_filepath;
-                // int flag;
+                char* input_filepaths[MAX_COMMANDS];
+                char* output_filepaths[MAX_COMMANDS];
+                int flags[MAX_COMMANDS];
                 
-                parse_command(strtok_r(input, "|", &saveptr), argv[0], MAX_TOKENS);
+                parse_command(strtok_r(input, "|", &saveptr), argv[0], &input_filepaths[0], &output_filepaths[0], &flags[0], MAX_TOKENS);
                 int i = 1;
                 while (i < MAX_COMMANDS) {
                     char* cmd = strtok_r(NULL, "|", &saveptr);
                     if(!cmd) {
                         break;
                     }
-                    parse_command(cmd, argv[i], MAX_TOKENS);
+                    parse_command(cmd, argv[i], &input_filepaths[i], &output_filepaths[i], &flags[i], MAX_TOKENS);
                     i++;
                 }
 
