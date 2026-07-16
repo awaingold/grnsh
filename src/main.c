@@ -5,11 +5,13 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-#include "builtins.h"
-#include "parser.h"
+#include <fcntl.h>
+#include "../util/builtins.h"
+#include "../util/parser.h"
+#include "../util/cleanup.h"
 
-#define MAX_COMMANDS 8
-#define MAX_TOKENS 8
+#define MAX_COMMANDS 32
+#define MAX_TOKENS 512
 
 int main() {
 
@@ -53,7 +55,13 @@ int main() {
                     continue;
                 } else if (strcmp(argv[0][0], "cd") == 0) {
                     cd(argv[0]);
+                    for (int i = 0; i < N; ++i) {
+                        cleanup(argv[i], MAX_TOKENS);
+                    }
                 } else if (strcmp(argv[0][0], "exit") == 0) {
+                    for (int i = 0; i < N; ++i) {
+                        cleanup(argv[i], MAX_TOKENS);
+                    }
                     break;
                 } else { // piping logic
 
@@ -94,6 +102,36 @@ int main() {
                                     _exit(1);
                                 }
                             }
+                            if (input_filepaths[k]) {
+                                int fd = open(input_filepaths[k], O_RDONLY);
+                                if (fd == -1) {
+                                    perror("grnsh");
+                                    _exit(1);
+                                }
+                                if (dup2(fd, 0) < 0) {
+                                    perror("grnsh");
+                                    _exit(1);
+                                }
+                                free(input_filepaths[k]);
+                            }
+                            if (output_filepaths[k]) {
+                                // TODO: dup2()
+                                int fd;
+                                if (flags[k]) {
+                                    fd = open(output_filepaths[k], O_WRONLY | O_APPEND | O_CREAT, (mode_t)00700);
+                                } else {
+                                    fd = open(output_filepaths[k], O_WRONLY | O_CREAT | O_TRUNC, (mode_t)00700);
+                                }
+                                if (fd == -1) {
+                                    perror("grnsh");
+                                    _exit(1);
+                                }
+                                if(dup2(fd, 1) < 0) {
+                                    perror("grnsh");
+                                    _exit(1);
+                                }
+                                free(output_filepaths[k]);
+                            }
                             for (int i = 0; i < N - 1; i++) { // close ALL pipe ends to avoid hanging
                                 close(pipefd[i][0]);
                                 close(pipefd[i][1]);
@@ -113,6 +151,15 @@ int main() {
                         close(pipefd[i][0]);
                         close(pipefd[i][1]);
                     }
+                    for (int k = 0; k < i; ++k) {
+                        cleanup(argv[k], MAX_TOKENS);
+                        if (input_filepaths[k]) {
+                            free(input_filepaths[k]);
+                        }
+                        if (output_filepaths[k]) {
+                            free(output_filepaths[k]);
+                        }
+                    }
                     int statuses[N];
                     for (int k = 0; k < N; k++) {
                         waitpid(ids[k], &statuses[k], 0);
@@ -131,4 +178,3 @@ int main() {
     return 0;
     
 }
-

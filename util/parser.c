@@ -18,6 +18,7 @@ int is_delimiter(char c) {
 
 /*
     Parses input into tokens with delimiters ' ', '<', '>', and '>>'. Delimiters are also tokenized.
+    Caller must free argv() when finished.
     @param input the input to tokenize
     @param argv an array for the tokens to be placed into
     @param max_tokens the maximum number of tokens
@@ -36,7 +37,7 @@ int tokenize(char* input, char* argv[], int max_tokens) {
             if (argp >= max_tokens - 1) {
                 fprintf(stderr, "Error: too many tokens.\n");
                 free(buffer);
-                return 1;
+                return -1;
             }
             if (bufferp >= bufferl - 1) {
                 char* tmp = realloc(buffer, bufferl + BUFFER_INCREMENT);
