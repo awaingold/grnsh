@@ -1,0 +1,6 @@
+grnsh: util/builtins.c util/cleanup.c util/parser.c src/grnsh.c
+	gcc -std=gnu17 util/builtins.c util/cleanup.c util/parser.c src/grnsh.c -o grnsh
+clean: grnsh
+	rm grnsh
+grnsh-w: util/builtins.c util/cleanup.c util/parser.c src/grnsh.c
+	gcc -Wall -g -std=gnu17 util/builtins.c util/cleanup.c util/parser.c src/grnsh.c -o grnsh
