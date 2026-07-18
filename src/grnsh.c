@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <signal.h>
 #include "../util/builtins.h"
 #include "../util/parser.h"
 #include "../util/cleanup.h"
@@ -18,6 +19,7 @@ int main() {
     size_t buffer_size = 0;
     ssize_t line_length;
     char* input = NULL;
+    sigaction(SIGINT, NULL, NULL);
 
     do {
         printf("> ");
