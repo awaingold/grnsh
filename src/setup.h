@@ -1,6 +1,6 @@
-#ifndef CLEANUP_H
-#define CLEANUP_H
+#ifndef SETUP_H
+#define SETUP_H
 
-void setup();
+int setup();
 
 #endif

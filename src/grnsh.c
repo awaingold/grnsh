@@ -10,16 +10,20 @@
 #include "../util/builtins.h"
 #include "../util/parser.h"
 #include "../util/cleanup.h"
+#include "./setup.h"
 
 #define MAX_COMMANDS 32
 #define MAX_TOKENS 512
 
 int main() {
 
+    if (setup() < 0) {
+        return 1;
+    }
+
     size_t buffer_size = 0;
     ssize_t line_length;
     char* input = NULL;
-    sigaction(SIGINT, NULL, NULL);
 
     do {
         printf("> ");
@@ -169,8 +173,13 @@ int main() {
                 }
             }
         } else {
+            // If interrupted, just continue (we want to ignore ctrl+c sigint)
+            if (ferror(stdin) && errno == EINTR) {
+                continue;
+            }
             // Encountered an error if not at EOF or if ferror
             if (!feof(stdin) || ferror(stdin)) {
+                printf("here error = %d\n", ferror(stdin));
                 perror("grnsh");
             }
         }
