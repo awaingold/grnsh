@@ -7,10 +7,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
+#include <stdbool.h>
 #include "../util/builtins.h"
 #include "../util/parser.h"
 #include "../util/cleanup.h"
-#include "./setup.h"
+#include "../util/setup.h"
 
 #define MAX_COMMANDS 32
 #define MAX_TOKENS 512
@@ -19,6 +20,11 @@ int main() {
 
     if (setup() < 0) {
         return 1;
+    }
+
+    bool is_interactive_session = false;
+    if (isatty(STDIN_FILENO)) {
+        is_interactive_session = true;
     }
 
     size_t buffer_size = 0;
@@ -86,6 +92,8 @@ int main() {
                     if (pipes_created != N - 1) {
                         continue;
                     }
+
+                    pid_t pgid;
                 
                     for (int k = 0; k < N; k++) {
                         pid_t pid = fork();
@@ -98,6 +106,19 @@ int main() {
                             // child
                             if (reset_handlers() < 0) {
                                 _exit(1);
+                            }
+                            if (is_interactive_session) {
+                                if (k == 0) {
+                                    if (setpgid(0, 0) < 0) {
+                                        perror("grnsh");
+                                        _exit(1);
+                                    }
+                                } else {
+                                    if (setpgid(0, pgid) < 0) {
+                                        perror("grnsh");
+                                        _exit(1);
+                                    }
+                                }
                             }
                             if (k != 0) {
                                 if (dup2(pipefd[k - 1][0], 0) < 0) {
@@ -124,14 +145,13 @@ int main() {
                                 free(input_filepaths[k]);
                             }
                             if (output_filepaths[k]) {
-                                // TODO: dup2()
                                 int fd;
                                 if (flags[k]) {
                                     fd = open(output_filepaths[k], O_WRONLY | O_APPEND | O_CREAT, (mode_t)00700);
                                 } else {
                                     fd = open(output_filepaths[k], O_WRONLY | O_CREAT | O_TRUNC, (mode_t)00700);
                                 }
-                                if (fd == -1) {
+                                if (fd < 0) {
                                     perror("grnsh");
                                     _exit(1);
                                 }
@@ -152,9 +172,27 @@ int main() {
                         } else {
                             // parent
                             ids[k] = pid;
+                            if (is_interactive_session) {
+                                if (k == 0) {
+                                    if (setpgid(pid, pid) < 0) {
+                                        perror("grnsh");
+                                    }
+                                    pgid = pid;
+                                } else {
+                                    if (setpgid(pid, pgid) < 0) {
+                                        perror("grnsh");
+                                    }
+                                }
                             }
+                            
+                        }
                     }
-        
+
+                    if (is_interactive_session) {
+                        if (tcsetpgrp(STDIN_FILENO, pgid) < 0) {
+                            perror("grnsh");
+                        }
+                    }
 
                     for (int i = 0; i < pipes_created; i++) { // close ALL pipe ends to avoid hanging, but in parent this time
                         close(pipefd[i][0]);
@@ -173,16 +211,23 @@ int main() {
                     for (int k = 0; k < N; k++) {
                         waitpid(ids[k], &statuses[k], 0);
                     }
+                    
+                    if (is_interactive_session) {
+                        if (tcsetpgrp(STDIN_FILENO, getpgrp()) < 0) {
+                            perror("grnsh");
+                        }
+                    }
                 }
             }
         } else {
             // If interrupted, just continue (we want to ignore ctrl+c sigint)
             if (ferror(stdin) && errno == EINTR) {
+                clearerr(stdin);
                 continue;
             }
             // Encountered an error if not at EOF or if ferror
             if (!feof(stdin) || ferror(stdin)) {
-                printf("here error = %d\n", ferror(stdin));
+
                 perror("grnsh");
             }
         }

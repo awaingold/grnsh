@@ -5,6 +5,9 @@
 #include <signal.h>
 #include <string.h>
 
+// This file has lots of red squiggles because VS code doesn't understand the stuff from signal.h
+// But it still compiles without warnings!
+
 /*
     Signal handler for SIGINT. Writes a newline to stdout.
 */
@@ -45,6 +48,21 @@ int setup_sigtstp() {
 }
 
 /*
+    Sets up the signal handler for SIGTTOU.
+    @return 0 on success, -1 on error
+    @throws error on error
+*/
+int setup_sigttou() {
+    struct sigaction act = { 0 };
+    act.sa_handler = SIG_IGN;
+    if (sigaction(SIGTTOU, &act, NULL) < 0) {
+        perror("grnsh");
+        return -1;
+    }
+    return 0;
+}
+
+/*
     Sets up signal handling for the shell itself.
     @return 0 on success, -1 on error
 */
@@ -53,6 +71,9 @@ int setup() {
         return -1;
     }
     if (setup_sigtstp() < 0) {
+        return -1;
+    }
+    if (setup_sigttou() < 0) {
         return -1;
     }
     return 0;
