@@ -96,6 +96,9 @@ int main() {
                             break;
                         } else if (pid == 0) {
                             // child
+                            if (reset_handlers() < 0) {
+                                _exit(1);
+                            }
                             if (k != 0) {
                                 if (dup2(pipefd[k - 1][0], 0) < 0) {
                                     perror("grnsh");

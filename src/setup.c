@@ -30,7 +30,7 @@ int setup_sigint() {
 }
 
 /*
-    Sets up the signal handler for SIGTSTP (ignores).
+    Sets up the signal handler for SIGTSTP.
     @return 0 on success, -1 on error
     @throws error on error
 */
@@ -58,3 +58,48 @@ int setup() {
     return 0;
 }
 
+/*
+    Resets the signal handler for SIGINT.
+    @return 0 on success, -1 on error
+    @throws error on error
+*/
+int reset_sigint() {
+    struct sigaction act = { 0 };
+    act.sa_handler = SIG_DFL;
+    sigemptyset(&act.sa_mask);
+    if (sigaction(SIGINT, &act, NULL) < 0) {
+        perror("grnsh");
+        return -1;
+    }
+    return 0;
+}
+
+/*
+    Resets the signal handler for SIGTSTP.
+    @return 0 on success, -1 on error
+    @throws error on error
+*/
+int reset_sigtstp() {
+    struct sigaction act = { 0 };
+    act.sa_handler = SIG_DFL;
+    sigemptyset(&act.sa_mask);
+    if (sigaction(SIGTSTP, &act, NULL) < 0) {
+        perror("grnsh");
+        return -1;
+    }
+    return 0;
+}
+
+/*
+    Resets signal handlers for SIGINT and SIGTSTP to their default values.
+    @return 0 on success, -1 on error
+*/
+int reset_handlers() {
+    if (reset_sigint() < 0) {
+        return -1;
+    }
+    if (reset_sigtstp() < 0) {
+        return -1;
+    }
+    return 0;
+}
