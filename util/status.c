@@ -9,17 +9,17 @@
 #include <../util/status.h>
 
 /*
-    Checks the status of the job pointed to by jb and updates its status accordingly.
-    @param jb the pointer to the struct job to be checked
-    @return 0 on success, -1 on error
-    @throws error on error
+    Helper. Checks the status of the processes in jb with the given flags
+    @param jb the job to be checked
+    @param flags the flags to check with
+    @return 0 on success, -1 on error.
     @requires jb != NULL
 */
-int check_status_bg(struct job* jb) {
+int check_status(struct job* jb, int flags) {
     pid_t pid = -1;
     int status;
     while (pid != 0) {
-        pid = waitpid(-jb->pgid, &status, WUNTRACED | WNOHANG);
+        pid = waitpid(-jb->pgid, &status, flags);
         if (pid < 0) {
             if (errno == ECHILD) {
                 jb->num_exited = jb->num_processes;
@@ -42,4 +42,26 @@ int check_status_bg(struct job* jb) {
         jb->status = DONE;
     }
     return 0;
+}
+
+/*
+    Checks the status of the BACKGROUND job pointed to by jb and updates its status accordingly.
+    @param jb the pointer to the struct job to be checked
+    @return 0 on success, -1 on error
+    @requires jb != NULL
+    @requires jb is a background job
+*/
+int check_status_bg(struct job* jb) {
+    return check_status(jb, WUNTRACED | WNOHANG);
+}
+
+/*
+    Checks the status of the FOREGROUND job pointed to by jb and updates its status accordingly.
+    @param jb the pointer to the struct job to be checked
+    @return 0 on success, -1 on error
+    @requires jb != NULL
+    @requires jb is a foreground job
+*/
+int check_status_fg(struct job* jb) {
+    return check_status(jb, WUNTRACED);
 }

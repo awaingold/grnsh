@@ -21,5 +21,6 @@ struct job {
 };
 
 int check_status_bg(struct job* jb);
+int check_status_fg(struct job* jb);
 
 #endif
