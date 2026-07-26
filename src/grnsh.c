@@ -12,9 +12,12 @@
 #include "../util/parser.h"
 #include "../util/cleanup.h"
 #include "../util/setup.h"
+#include "../util/job.h"
 
 #define MAX_COMMANDS 32
 #define MAX_TOKENS 512
+
+struct job job_table[MAX_JOBS];
 
 int main() {
 

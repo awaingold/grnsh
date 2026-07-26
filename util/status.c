@@ -6,7 +6,8 @@
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>
-#include <../util/status.h>
+#include <stdbool.h>
+#include <../util/job.h>
 
 /*
     Helper. Checks the status of the processes in jb with the given flags
