@@ -4,15 +4,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdbool.h>
 #define DEFAULT_LENGTH 16
 #define BUFFER_INCREMENT 16
 
 /*
     Returns whether c is a delimiter character.
     @param c the character to test
-    @returns 1 if c is a delimiter, 0 otherwise
+    @returns true if c is a delimiter, false otherwise
 */
-int is_delimiter(char c) {
+bool is_delimiter(char c) {
     return (int)(c == '>' || c == '<' || c == ' ' || c == '\n');
 }
 
@@ -170,3 +171,31 @@ void parse_command(char* input, char* argv[], char** input_file, char** output_f
     }
 }
 
+/*
+    Returns whether a character is whitespace.
+    @param c the char to check
+    @return true if c is whitespace, false otherwise
+*/
+bool is_whitespace(char c) {
+    return c == ' ' || c == '\n';
+}
+
+/*
+    Parses the given input for a background & character.
+    @param input the string to check
+    @return true if input contains an & at its end, false if otherwise
+    @modifies writes a null terminator in place of the & character in input.
+*/
+bool parse_for_background(char* input) {
+    int len = strlen(input);
+    for (int i = len - 1; i >= 0; --i) {
+        if (!is_whitespace(input[i])) {
+            if (input[i] == '&') {
+                input[i] = '\0';
+                return true;
+            }
+            return false; 
+        }
+    }
+    return false;
+}
