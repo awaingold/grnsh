@@ -7,7 +7,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <stdbool.h>
-#include <../util/job.h>
+#include "../util/job.h"
 
 /*
     Helper. Checks the status of the processes in jb with the given flags

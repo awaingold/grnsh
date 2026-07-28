@@ -13,6 +13,7 @@
 #include "../util/cleanup.h"
 #include "../util/setup.h"
 #include "../util/job.h"
+#include "../util/status.h"
 
 #define MAX_COMMANDS 32
 #define MAX_TOKENS 512
@@ -47,6 +48,10 @@ int main() {
                 char* input_filepaths[MAX_COMMANDS];
                 char* output_filepaths[MAX_COMMANDS];
                 int flags[MAX_COMMANDS];
+
+                bool bg = parse_for_background(input);
+                char* input_copy;
+                input_copy = strdup(input);
                 
                 parse_command(strtok_r(input, "|", &saveptr), argv[0], &input_filepaths[0], &output_filepaths[0], &flags[0], MAX_TOKENS);
                 int i = 1;
@@ -191,7 +196,7 @@ int main() {
                         }
                     }
 
-                    if (is_interactive_session) {
+                    if (!bg && is_interactive_session) {
                         if (tcsetpgrp(STDIN_FILENO, pgid) < 0) {
                             perror("grnsh");
                         }
@@ -211,15 +216,33 @@ int main() {
                         }
                     }
                     int statuses[N];
-                    for (int k = 0; k < N; k++) {
-                        waitpid(ids[k], &statuses[k], 0);
-                    }
-                    
-                    if (is_interactive_session) {
-                        if (tcsetpgrp(STDIN_FILENO, getpgrp()) < 0) {
-                            perror("grnsh");
+                    // TODO: proper error checking in this whole sequence
+                    if(!bg) {
+                        // Horrible ugly way of doing this. Memory doesn't grow on trees, ya know!
+                        struct job new_job = { 0 };
+                        new_job.in_use = true;
+                        new_job.num_exited = 0;
+                        new_job.num_processes = N;
+                        new_job.pgid = pgid;
+                        new_job.status = RUNNING;
+                        new_job.text = input_copy;
+                        check_status_fg(&new_job);
+                        if (new_job.status == STOPPED) {
+                            // printf("before add\n");
+                            add_job(pgid, input_copy, N);
+                            // printf("after add\n");
                         }
+                        if (is_interactive_session) {
+                                if (tcsetpgrp(STDIN_FILENO, getpgrp()) < 0) {
+                                perror("grnsh");
+                            }   
+                        }
+                    } else {
+                        add_job(pgid, input_copy, N);
                     }
+                    free(input_copy);
+                    
+                    
                 }
             }
         } else {

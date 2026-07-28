@@ -1,9 +1,10 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 #include <sys/types.h>
-#include <../util/job.h>
-#include <../src/grnsh.h>
+#include "../util/job.h"
+#include "../src/grnsh.h"
 #include <stdbool.h>
 
 int next_id = 1;
@@ -27,7 +28,7 @@ struct job* lookup_job(int user_id) {
     @param pgid the pgid of the new job
     @param input the new jobs input string
     @param num_processes the number of processes in the new job
-    @returns 0 if the job was successfully added, -1 otherwise.
+    @returns 0 on success, -1 on failure
 */
 int add_job(pid_t pgid, char* input, int num_processes) {
     for (int i = 0; i < MAX_JOBS; ++i) {
@@ -39,7 +40,9 @@ int add_job(pid_t pgid, char* input, int num_processes) {
             jb.status = RUNNING;
             jb.user_id = next_id;
             jb.in_use = true;
+            // printf("before text malloc\n");
             jb.text = malloc(strlen(input) + 1);
+            // printf("before strcpy\n");
             strcpy(jb.text, input);
             next_id++;
             job_table[i] = jb;
@@ -50,7 +53,7 @@ int add_job(pid_t pgid, char* input, int num_processes) {
 }
 
 /*
-    Removes the job with the specified user id from the job table.
+    Removes the job with the specified user id from the job table. Frees the text field of the job.
     @param user_id the id of the job to be removed
     @return 0 on success
 */
