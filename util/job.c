@@ -28,7 +28,7 @@ struct job* lookup_job(int user_id) {
     @param pgid the pgid of the new job
     @param input the new jobs input string
     @param num_processes the number of processes in the new job
-    @returns 0 on success, -1 on failure
+    @returns the user_id of the new job on success, -1 on failure
 */
 int add_job(pid_t pgid, char* input, int num_processes) {
     for (int i = 0; i < MAX_JOBS; ++i) {
@@ -46,7 +46,7 @@ int add_job(pid_t pgid, char* input, int num_processes) {
             strcpy(jb.text, input);
             next_id++;
             job_table[i] = jb;
-            return 0;
+            return next_id - 1;
         }
     }
     return -1;
@@ -67,4 +67,3 @@ int remove_job(int user_id) {
     }
     return 0;
 }
-

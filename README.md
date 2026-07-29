@@ -5,6 +5,7 @@ Current supported features:
 - Piping
 - File I/O redirection with ```<```, ```>```, and ```>>```
 - Process signal handling
+- Basic backgrounding (start a process in the background with ```[cmd] &```)
 
 Builtins:
 - ```cd```

@@ -36,6 +36,7 @@ int main() {
     char* input = NULL;
 
     do {
+        check_all_jobs();
         printf("> ");
 
         line_length = getline(&input, &buffer_size, stdin);
@@ -215,7 +216,7 @@ int main() {
                             free(output_filepaths[k]);
                         }
                     }
-                    int statuses[N];
+                    // int statuses[N];
                     // TODO: proper error checking in this whole sequence
                     if(!bg) {
                         // Horrible ugly way of doing this. Memory doesn't grow on trees, ya know!
@@ -229,7 +230,8 @@ int main() {
                         check_status_fg(&new_job);
                         if (new_job.status == STOPPED) {
                             // printf("before add\n");
-                            add_job(pgid, input_copy, N);
+                            int user_id = add_job(pgid, input_copy, N);
+                            printf("[%d] %d\n", user_id, pgid);
                             // printf("after add\n");
                         }
                         if (is_interactive_session) {
@@ -238,7 +240,8 @@ int main() {
                             }   
                         }
                     } else {
-                        add_job(pgid, input_copy, N);
+                        int user_id = add_job(pgid, input_copy, N);
+                        printf("[%d] %d\n", user_id, pgid);
                     }
                     free(input_copy);
                     

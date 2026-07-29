@@ -8,6 +8,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include "../util/job.h"
+#include "../src/grnsh.h"
 
 /*
     Helper. Checks the status of the processes in jb with the given flags
@@ -65,4 +66,22 @@ int check_status_bg(struct job* jb) {
 */
 int check_status_fg(struct job* jb) {
     return check_status(jb, WUNTRACED);
+}
+
+/*
+    Checks the status of all jobs in the job table, and prints the finished jobs to the standard output.
+    Removes the finished jobs from the job table.
+    @return 0 on success, -1 on failure.
+*/
+int check_all_jobs() {
+    for (int i = 0; i < MAX_JOBS; ++i) {
+        if (job_table[i].in_use) {
+            check_status_bg(&job_table[i]);
+            if (job_table[i].status == DONE) {
+                printf("[%d] Done %s\n", job_table[i].user_id, job_table[i].text);
+                remove_job(job_table[i].user_id);
+            }
+        }
+    }
+    return 0;
 }

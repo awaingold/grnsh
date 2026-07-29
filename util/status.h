@@ -5,5 +5,6 @@
 
 int check_status_bg(struct job* jb);
 int check_status_fg(struct job* jb);
+int check_all_jobs();
 
 #endif
