@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <signal.h>
+#include "../util/job.h"
+#include "../util/status.h"
 
 /*
 Changes the directory of the calling process to argv[1], or to the user's home directory if argv[1] is null.
@@ -24,3 +27,79 @@ void cd(char* argv[]) {
     }
 }
 
+/*
+    Backgrounds the job with id user_id
+    @param user_id the id to be backgrounded
+    @return 0 on success, -1 on error
+    @throws error on error, or if no job with id user_id exists.
+*/
+int bg(int user_id) {
+    struct job* jb = lookup_job(user_id);
+    if (jb == NULL) {
+        fprintf(stderr, "grnsh: job %d not found.\n", user_id);
+        return -1;
+    }
+    pid_t pgid = jb->pgid;
+    if (jb->status != RUNNING) {
+        if (kill(-pgid, SIGCONT) < 0) {
+            perror("grnsh");
+            return -1;
+        }
+        jb-> status = RUNNING;
+    }
+    char* text = jb->text;
+    printf("[%d]+ %s\n", user_id, text);
+    return 0;
+}
+
+/*
+    Foregrounds the job with id user_id
+    @param user_id the id to be foregrounded
+    @return 0 on success, -1 on error
+    @throws error on error, or if no job with id user_id exists.
+*/
+int fg(int user_id) {
+    struct job* jb = lookup_job(user_id);
+    if (jb == NULL) {
+        fprintf(stderr, "grnsh: job %d not found.\n", user_id);
+        return -1;
+    }
+    pid_t pgid = jb->pgid;
+    if (jb->status != RUNNING) {
+        if (kill(-pgid, SIGCONT) < 0) {
+        perror("grnsh");
+        return -1;
+    }
+        jb->status = RUNNING;
+    }
+    if (tcsetpgrp(STDIN_FILENO, pgid) < 0) {
+        perror("grnsh");
+        return -1;
+    }
+    if (check_status_fg(jb) < 0) {
+        tcsetpgrp(STDIN_FILENO, getpgrp());
+        return -1;
+    }
+    tcsetpgrp(STDIN_FILENO, getpgrp());
+    return 0;
+}
+
+/*
+    Terminates the job with id user_id
+    @param user_id the id to be terminated
+    @return 0 on success, -1 on error
+    @throws error on error
+*/
+int kill_job(int user_id) {
+    struct job* jb = lookup_job(user_id);
+    if (jb == NULL) {
+        fprintf(stderr, "grnsh: job %d not found.\n", user_id);
+        return -1;
+    }
+    pid_t pgid = jb->pgid;
+    if (kill(-pgid, SIGTERM) < 0) {
+        perror("grnsh");
+        return -1;
+    }
+    return 0;
+}

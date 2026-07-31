@@ -76,7 +76,9 @@ int check_status_fg(struct job* jb) {
 int check_all_jobs() {
     for (int i = 0; i < MAX_JOBS; ++i) {
         if (job_table[i].in_use) {
-            check_status_bg(&job_table[i]);
+            if (check_status_bg(&job_table[i]) < 0) {
+                return -1;
+            }
             if (job_table[i].status == DONE) {
                 printf("[%d] Done %s\n", job_table[i].user_id, job_table[i].text);
                 remove_job(job_table[i].user_id);

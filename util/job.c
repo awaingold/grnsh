@@ -16,7 +16,7 @@ int next_id = 1;
 */
 struct job* lookup_job(int user_id) {
     for (int i = 0; i < MAX_JOBS; ++i) {
-        if (job_table[i].user_id == user_id) {
+        if (job_table[i].in_use && job_table[i].user_id == user_id) {
             return &job_table[i];
         }
     }
