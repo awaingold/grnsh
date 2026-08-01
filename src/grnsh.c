@@ -82,10 +82,12 @@ int main() {
                     for (int i = 0; i < num_commands; ++i) {
                         cleanup(argv[i], MAX_TOKENS);
                     }
+                    free(input_copy);
                 } else if (strcmp(argv[0][0], "exit") == 0) {
                     for (int i = 0; i < num_commands; ++i) {
                         cleanup(argv[i], MAX_TOKENS);
                     }
+                    free(input_copy);
                     break;
                 } else if (strcmp(argv[0][0], "fg") == 0) {
                     if (argv[0][1]) {
@@ -96,6 +98,7 @@ int main() {
                     for (int i = 0; i < num_commands; ++i) {
                         cleanup(argv[i], MAX_TOKENS);
                     }
+                    free(input_copy);
                 } else if (strcmp(argv[0][0], "bg") == 0) {
                     if (argv[0][1]) {
                         bg(atoi(argv[0][1]));
@@ -105,6 +108,7 @@ int main() {
                     for (int i = 0; i < num_commands; ++i) {
                         cleanup(argv[i], MAX_TOKENS);
                     }
+                    free(input_copy);
                 } else if (strcmp(argv[0][0], "kill") == 0) {
                     if (argv[0][1]) {
                         kill_job(atoi(argv[0][1]));
@@ -114,6 +118,7 @@ int main() {
                     for (int i = 0; i < num_commands; ++i) {
                         cleanup(argv[i], MAX_TOKENS);
                     }
+                    free(input_copy);
                 } else { // piping logic
 
                     int pipefd[num_commands - 1][2];
