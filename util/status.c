@@ -80,7 +80,11 @@ int check_all_jobs() {
                 return -1;
             }
             if (job_table[i].status == DONE) {
-                printf("[%d] Done %s\n", job_table[i].user_id, job_table[i].text);
+                if (job_table[i].text[strlen(job_table[i].text - 1)] != '\n') {
+                    printf("[%d] Done %s\n", job_table[i].user_id, job_table[i].text);
+                } else {
+                    printf("[%d] Done %s", job_table[i].user_id, job_table[i].text);
+                }
                 remove_job(job_table[i].user_id);
             }
         }

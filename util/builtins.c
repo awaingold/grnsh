@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <signal.h>
+#include <string.h>
 #include "../util/job.h"
 #include "../util/status.h"
 
@@ -48,7 +49,11 @@ int bg(int user_id) {
         jb-> status = RUNNING;
     }
     char* text = jb->text;
-    printf("[%d]+ %s\n", user_id, text);
+    if (text[strlen(text) - 1] != '\n') {
+        printf("[%d]+ %s\n", user_id, text);
+    } else {
+        printf("[%d]+ %s", user_id, text);
+    }
     return 0;
 }
 
@@ -101,5 +106,12 @@ int kill_job(int user_id) {
         perror("grnsh");
         return -1;
     }
+    // need to wake up process so it can actually respond to SIGTERM
+    if (kill(-pgid, SIGCONT) < 0) {
+        perror("grnsh");
+        return -1;
+    }
+    check_status_fg(jb);
+    remove_job(user_id);
     return 0;
 }

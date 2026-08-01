@@ -52,7 +52,7 @@ int main() {
                 char* output_filepaths[MAX_COMMANDS];
                 int flags[MAX_COMMANDS];
 
-                bool bg = parse_for_background(input);
+                bool is_bg = parse_for_background(input);
                 char* input_copy;
                 input_copy = strdup(input);
                 
@@ -74,6 +74,7 @@ int main() {
                 }
 
                 // Check for empty, then for builtins
+    
                 if(argv[0][0] == NULL) {
                     continue;
                 } else if (strcmp(argv[0][0], "cd") == 0) {
@@ -86,6 +87,33 @@ int main() {
                         cleanup(argv[i], MAX_TOKENS);
                     }
                     break;
+                } else if (strcmp(argv[0][0], "fg") == 0) {
+                    if (argv[0][1]) {
+                        fg(atoi(argv[0][1]));
+                    } else {
+                        fprintf(stderr, "fg: expected 1 argument but got 0\n");
+                    }
+                    for (int i = 0; i < num_commands; ++i) {
+                        cleanup(argv[i], MAX_TOKENS);
+                    }
+                } else if (strcmp(argv[0][0], "bg") == 0) {
+                    if (argv[0][1]) {
+                        bg(atoi(argv[0][1]));
+                    } else {
+                        fprintf(stderr, "bg: expected 1 argument but got 0\n");
+                    }
+                    for (int i = 0; i < num_commands; ++i) {
+                        cleanup(argv[i], MAX_TOKENS);
+                    }
+                } else if (strcmp(argv[0][0], "kill") == 0) {
+                    if (argv[0][1]) {
+                        kill_job(atoi(argv[0][1]));
+                    } else {
+                        fprintf(stderr, "kill: expected 1 argument but got 0\n");
+                    }
+                    for (int i = 0; i < num_commands; ++i) {
+                        cleanup(argv[i], MAX_TOKENS);
+                    }
                 } else { // piping logic
 
                     int pipefd[num_commands - 1][2];
@@ -197,7 +225,7 @@ int main() {
                         }
                     }
 
-                    if (!bg && is_interactive_session) {
+                    if (!is_bg && is_interactive_session) {
                         if (tcsetpgrp(STDIN_FILENO, pgid) < 0) {
                             perror("grnsh");
                         }
@@ -218,7 +246,7 @@ int main() {
                             free(output_filepaths[k]);
                         }
                     }
-                    if(!bg) {
+                    if(!is_bg) {
                         // Horrible ugly way of doing this. Memory doesn't grow on trees, ya know!
                         struct job new_job = { 0 };
                         new_job.in_use = true;
@@ -231,7 +259,7 @@ int main() {
                             perror("grnsh");
                         }
                         if (new_job.status == STOPPED) {
-                            int user_id = add_job(pgid, input_copy, num_commands);
+                            int user_id = add_job(pgid, input_copy, num_commands, false);
                             printf("[%d]+ Stopped %s", user_id, input_copy);
                         }
                         if (is_interactive_session) {
@@ -240,7 +268,8 @@ int main() {
                             }   
                         }
                     } else {
-                        int user_id = add_job(pgid, input_copy, num_commands);
+                        // Creating the new job in the background (running!)
+                        int user_id = add_job(pgid, input_copy, num_commands, true);
                         if (user_id < 0) {
                             perror("grnsh");
                         } else {

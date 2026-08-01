@@ -24,20 +24,24 @@ struct job* lookup_job(int user_id) {
 }
 
 /*
-    Adds a new job to the table with the specified pgid, input string, and number of processes.
+    Adds a new job to the table with the specified pgid, input string, and number of processes. Sets the job's status to STOPPED.
     @param pgid the pgid of the new job
     @param input the new jobs input string
     @param num_processes the number of processes in the new job
     @returns the user_id of the new job on success, -1 on failure
 */
-int add_job(pid_t pgid, char* input, int num_processes) {
+int add_job(pid_t pgid, char* input, int num_processes, bool running) {
     for (int i = 0; i < MAX_JOBS; ++i) {
         if (!job_table[i].in_use) {
             struct job jb;
             jb.pgid = pgid;
             jb.num_processes = num_processes;
             jb.num_exited = 0;
-            jb.status = RUNNING;
+            if (running) {
+                jb.status = RUNNING;
+            } else {
+                jb.status = STOPPED;
+            }
             jb.user_id = next_id;
             jb.in_use = true;
             // printf("before text malloc\n");

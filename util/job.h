@@ -24,7 +24,7 @@ struct job {
     bool in_use;
 };
 
-int add_job(pid_t pgid, char* input, int num_processes);
+int add_job(pid_t pgid, char* input, int num_processes, bool running);
 int remove_job(int user_id);
 struct job* lookup_job(int user_id);
 
