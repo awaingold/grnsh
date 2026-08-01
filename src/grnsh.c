@@ -67,7 +67,7 @@ int main() {
                     i++;
                 }
 
-                int N = i;
+                int num_commands= i;
 
                 if (strtok_r(NULL, "|", &saveptr)) {
                     printf("Error: too many commands\n");
@@ -78,21 +78,20 @@ int main() {
                     continue;
                 } else if (strcmp(argv[0][0], "cd") == 0) {
                     cd(argv[0]);
-                    for (int i = 0; i < N; ++i) {
+                    for (int i = 0; i < num_commands; ++i) {
                         cleanup(argv[i], MAX_TOKENS);
                     }
                 } else if (strcmp(argv[0][0], "exit") == 0) {
-                    for (int i = 0; i < N; ++i) {
+                    for (int i = 0; i < num_commands; ++i) {
                         cleanup(argv[i], MAX_TOKENS);
                     }
                     break;
                 } else { // piping logic
 
-                    int pipefd[N - 1][2];
-                    pid_t ids[N];
+                    int pipefd[num_commands - 1][2];
                     int pipes_created = 0;
 
-                    for (int k = 0; k < N - 1; k++) {
+                    for (int k = 0; k < num_commands - 1; k++) {
                         if (pipe(pipefd[k]) < 0) {
                             perror("grnsh");
                         } else {
@@ -100,18 +99,18 @@ int main() {
                         }
                     }
 
-                    if (pipes_created != N - 1) {
+                    if (pipes_created !=num_commands- 1) {
                         continue;
                     }
 
                     pid_t pgid;
                 
-                    for (int k = 0; k < N; k++) {
+                    for (int k = 0; k < num_commands; k++) {
                         pid_t pid = fork();
                         if (pid < 0) {
                             //error
                             perror("grnsh");
-                            N = k;
+                           num_commands= k;
                             break;
                         } else if (pid == 0) {
                             // child
@@ -137,7 +136,7 @@ int main() {
                                     _exit(1);
                                 }
                             }
-                            if (k != N - 1) {
+                            if (k !=num_commands- 1) {
                                 if (dup2(pipefd[k][1], 1) < 0) {
                                     perror("grnsh");
                                     _exit(1);
@@ -172,7 +171,7 @@ int main() {
                                 }
                                 free(output_filepaths[k]);
                             }
-                            for (int i = 0; i < N - 1; i++) { // close ALL pipe ends to avoid hanging
+                            for (int i = 0; i <num_commands- 1; i++) { // close ALL pipe ends to avoid hanging
                                 close(pipefd[i][0]);
                                 close(pipefd[i][1]);
                             }
@@ -182,7 +181,6 @@ int main() {
                             } 
                         } else {
                             // parent
-                            ids[k] = pid;
                             if (is_interactive_session) {
                                 if (k == 0) {
                                     if (setpgid(pid, pid) < 0) {
@@ -225,7 +223,7 @@ int main() {
                         struct job new_job = { 0 };
                         new_job.in_use = true;
                         new_job.num_exited = 0;
-                        new_job.num_processes = N;
+                        new_job.num_processes = num_commands;
                         new_job.pgid = pgid;
                         new_job.status = RUNNING;
                         new_job.text = input_copy;
@@ -233,7 +231,7 @@ int main() {
                             perror("grnsh");
                         }
                         if (new_job.status == STOPPED) {
-                            int user_id = add_job(pgid, input_copy, N);
+                            int user_id = add_job(pgid, input_copy, num_commands);
                             printf("[%d]+ Stopped %s", user_id, input_copy);
                         }
                         if (is_interactive_session) {
@@ -242,7 +240,7 @@ int main() {
                             }   
                         }
                     } else {
-                        int user_id = add_job(pgid, input_copy, N);
+                        int user_id = add_job(pgid, input_copy, num_commands);
                         if (user_id < 0) {
                             perror("grnsh");
                         } else {
