@@ -115,3 +115,15 @@ int kill_job(int user_id) {
     remove_job(user_id);
     return 0;
 }
+
+/*
+    Prints a list of shell builtins.
+*/
+void help() {
+    printf("grnsh (pronounced \"grinch\")\n");
+    printf("available shell builtins:\n\n");
+    printf("cd <path> \t changes the current working directory to path\n");
+    printf("fg <job_id> \t moves the background job with id job_id to the foreground.\n");
+    printf("bg <job_id> \t resumes the backgrounded job with id job_id\n");
+    printf("kill <job_id> \t terminates the job with id job_id\n");
+}

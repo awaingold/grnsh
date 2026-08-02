@@ -8,6 +8,10 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <stdbool.h>
+#include <limits.h>
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
 #include "../util/builtins.h"
 #include "../util/parser.h"
 #include "../util/cleanup.h"
@@ -39,7 +43,12 @@ int main() {
         if (check_all_jobs() < 0) {
             perror("grnsh");
         }
-        printf("> ");
+        char working_path[PATH_MAX];
+        if (getcwd(working_path, PATH_MAX)) {
+            printf("%s > ", working_path);
+        } else {
+            printf("> ");
+        }
 
         line_length = getline(&input, &buffer_size, stdin);
 
@@ -76,6 +85,7 @@ int main() {
                 // Check for empty, then for builtins
     
                 if(argv[0][0] == NULL) {
+                    free(input_copy);
                     continue;
                 } else if (strcmp(argv[0][0], "cd") == 0) {
                     cd(argv[0]);
@@ -119,6 +129,12 @@ int main() {
                         cleanup(argv[i], MAX_TOKENS);
                     }
                     free(input_copy);
+                } else if (strcmp(argv[0][0], "help") == 0) {
+                    help();
+                    for (int i = 0; i < num_commands; ++i) {
+                        cleanup(argv[i], MAX_TOKENS);
+                    }
+                    free(input_copy);
                 } else { // piping logic
 
                     int pipefd[num_commands - 1][2];
@@ -132,7 +148,8 @@ int main() {
                         }
                     }
 
-                    if (pipes_created !=num_commands- 1) {
+                    if (pipes_created != num_commands- 1) {
+                        free(input_copy);
                         continue;
                     }
 
